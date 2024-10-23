@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+       "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Andere Schlüssel -->
+
+    <!-- Berechtigungen -->
+    <key>NSCameraUsageDescription</key>
+    <string>Kamera wird benötigt, um QR-Codes zu scannen</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Erforderlich für die Audiowiedergabe</string>
+
+    <!-- Spotify URL Schemes -->
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>spotify</string>
+    </array>
+
+    <!-- Redirect URI Schema -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>spotifyqrapp</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>
