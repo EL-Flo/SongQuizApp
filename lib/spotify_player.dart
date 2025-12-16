@@ -6,17 +6,27 @@ import 'package:spotify_sdk/models/player_state.dart';
 class SpotifyPlayer extends StatefulWidget {
   final String spotifyUri;
 
-  SpotifyPlayer({required this.spotifyUri});
+  const SpotifyPlayer({super.key, required this.spotifyUri});
 
   @override
   _SpotifyPlayerState createState() => _SpotifyPlayerState();
 }
 
 class _SpotifyPlayerState extends State<SpotifyPlayer> {
+  String statusMessage = 'Verbinde mit Spotify...';
+  bool isConnected = false;
+
   @override
   void initState() {
     super.initState();
     connectToSpotify();
+  }
+
+  @override
+  void dispose() {
+    // Cleanup: disconnect from Spotify if needed
+    SpotifySdk.disconnect();
+    super.dispose();
   }
 
   Future<void> connectToSpotify() async {
@@ -25,27 +35,65 @@ class _SpotifyPlayerState extends State<SpotifyPlayer> {
         clientId: 'e2223e43a02d44b8b9bd684c1e19da83',
         redirectUrl: 'spotifyqrapp://callback',
       );
+      if (mounted) {
+        setState(() {
+          isConnected = true;
+          statusMessage = 'Verbunden! Spiele Song...';
+        });
+      }
       print('Connected to Spotify: $result');
-      playSong(widget.spotifyUri);
+      await playSong(widget.spotifyUri);
     } catch (e) {
       print('Error connecting to Spotify: $e');
+      if (mounted) {
+        setState(() {
+          statusMessage = 'Fehler beim Verbinden: ${e.toString()}';
+        });
+      }
     }
   }
 
   Future<void> playSong(String uri) async {
     try {
       await SpotifySdk.play(spotifyUri: uri);
+      if (mounted) {
+        setState(() {
+          statusMessage = 'Song wird abgespielt!';
+        });
+      }
     } catch (e) {
       print('Error playing song: $e');
+      if (mounted) {
+        setState(() {
+          statusMessage = 'Fehler beim Abspielen: ${e.toString()}';
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Spotify Player')),
+      appBar: AppBar(title: const Text('Spotify Player')),
       body: Center(
-        child: Text('Spiele Song...'),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (!isConnected)
+              const CircularProgressIndicator()
+            else
+              const Icon(Icons.music_note, size: 64, color: Colors.green),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                statusMessage,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
