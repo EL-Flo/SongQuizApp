@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 
@@ -11,6 +13,8 @@ class QRScanner extends StatefulWidget {
 class _QRScannerState extends State<QRScanner> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   QRViewController? controller;
+  StreamSubscription<Barcode>? _scanSubscription;
+  bool _didHandleScan = false;
 
   @override
   void reassemble() {
@@ -23,6 +27,7 @@ class _QRScannerState extends State<QRScanner> {
 
   @override
   void dispose() {
+    _scanSubscription?.cancel();
     controller?.dispose();
     super.dispose();
   }
@@ -53,8 +58,10 @@ class _QRScannerState extends State<QRScanner> {
 
   void _onQRViewCreated(QRViewController controller) {
     this.controller = controller;
-    controller.scannedDataStream.listen((scanData) {
+    _scanSubscription = controller.scannedDataStream.listen((scanData) {
+      if (_didHandleScan) return;
       if (scanData.code != null && scanData.code!.isNotEmpty) {
+        _didHandleScan = true;
         controller.pauseCamera();
         if (mounted) {
           Navigator.pop(context, scanData.code);

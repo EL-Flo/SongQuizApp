@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'qr_scanner.dart';
 import 'spotify_player.dart';
@@ -25,13 +26,13 @@ class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   Future<void> _scanQRCode(BuildContext context) async {
-    final qrResult = await Navigator.push(
+    final String? qrResult = await Navigator.push<String>(
       context,
       MaterialPageRoute(builder: (context) => const QRScanner()),
     );
 
-    if (qrResult != null && qrResult is String) {
-      String spotifyUri = extractSpotifyUri(qrResult);
+    if (qrResult != null) {
+      final String spotifyUri = extractSpotifyUri(qrResult);
       if (spotifyUri.isNotEmpty) {
         if (context.mounted) {
           Navigator.push(
@@ -52,20 +53,26 @@ class HomePage extends StatelessWidget {
   }
 
   String extractSpotifyUri(String scannedData) {
-    try {
-      if (scannedData.contains('spotify.com')) {
-        Uri uri = Uri.parse(scannedData);
-        List<String> segments = uri.pathSegments;
-        if (segments.length >= 2) {
-          String type = segments[0]; // z.B. 'track', 'album'
-          String id = segments[1];
-          return 'spotify:$type:$id';
-        }
-      } else if (scannedData.contains('spotify:')) {
-        return scannedData;
+    if (scannedData.startsWith('spotify:')) {
+      return scannedData;
+    }
+
+    final Uri? uri = Uri.tryParse(scannedData);
+    if (uri == null || !uri.host.contains('spotify.com')) {
+      return '';
+    }
+
+    final List<String> segments = uri.pathSegments;
+    if (segments.length >= 2) {
+      final String type = segments[0];
+      final String id = segments[1];
+      if (type.isNotEmpty && id.isNotEmpty) {
+        return 'spotify:$type:$id';
       }
-    } catch (e) {
-      print('Error parsing Spotify URI: $e');
+    }
+
+    if (kDebugMode) {
+      debugPrint('Invalid Spotify URI in scan result: $scannedData');
     }
     return '';
   }

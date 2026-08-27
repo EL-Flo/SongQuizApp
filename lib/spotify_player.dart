@@ -1,7 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
-import 'package:spotify_sdk/models/connection_status.dart';
-import 'package:spotify_sdk/models/player_state.dart';
 
 class SpotifyPlayer extends StatefulWidget {
   final String spotifyUri;
@@ -31,24 +30,38 @@ class _SpotifyPlayerState extends State<SpotifyPlayer> {
 
   Future<void> connectToSpotify() async {
     try {
-      var result = await SpotifySdk.connectToSpotifyRemote(
+      final bool connected = await SpotifySdk.connectToSpotifyRemote(
         clientId: 'e2223e43a02d44b8b9bd684c1e19da83',
         redirectUrl: 'spotifyqrapp://callback',
       );
-      if (mounted) {
+
+      if (!mounted) return;
+
+      if (!connected) {
         setState(() {
-          isConnected = true;
-          statusMessage = 'Verbunden! Spiele Song...';
+          isConnected = false;
+          statusMessage = 'Spotify-Verbindung fehlgeschlagen.';
         });
+        return;
       }
-      print('Connected to Spotify: $result');
+
+      setState(() {
+        isConnected = true;
+        statusMessage = 'Verbunden! Spiele Song...';
+      });
+
+      if (kDebugMode) {
+        debugPrint('Connected to Spotify');
+      }
       await playSong(widget.spotifyUri);
     } catch (e) {
-      print('Error connecting to Spotify: $e');
       if (mounted) {
         setState(() {
           statusMessage = 'Fehler beim Verbinden: ${e.toString()}';
         });
+      }
+      if (kDebugMode) {
+        debugPrint('Error connecting to Spotify: $e');
       }
     }
   }
@@ -62,7 +75,9 @@ class _SpotifyPlayerState extends State<SpotifyPlayer> {
         });
       }
     } catch (e) {
-      print('Error playing song: $e');
+      if (kDebugMode) {
+        debugPrint('Error playing song: $e');
+      }
       if (mounted) {
         setState(() {
           statusMessage = 'Fehler beim Abspielen: ${e.toString()}';
